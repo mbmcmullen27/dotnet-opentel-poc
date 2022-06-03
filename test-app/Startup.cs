@@ -14,6 +14,7 @@ using OpenTelemetry;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 using OpenTelemetry.Exporter.Prometheus;
 
 namespace test_app
