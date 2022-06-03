@@ -14,6 +14,7 @@ using OpenTelemetry;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Exporter.Prometheus;
 
 namespace test_app
 {
@@ -30,6 +31,10 @@ namespace test_app
         public void ConfigureServices(IServiceCollection services)
         {
             var ep = new System.Uri(Configuration["Tempo:Url"]);
+
+            services.AddOpenTelemetryMetrics(builder => {
+                builder.AddPrometheusExporter();
+            });
 
             services.AddOpenTelemetryTracing(
                 (builder) => {
@@ -56,6 +61,10 @@ namespace test_app
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseOpenTelemetryPrometheusScrapingEndpoint(
+                context => context.Request.Path == "/internal/metrics"
+                    && context.Connection.LocalPort == 5067);
 
             app.UseAuthorization();
 
