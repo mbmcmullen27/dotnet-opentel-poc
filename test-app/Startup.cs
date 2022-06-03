@@ -10,6 +10,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using OpenTelemetry;
+using OpenTelemetry.Instrumentation.AspNetCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace test_app
 {
@@ -25,6 +29,19 @@ namespace test_app
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var ep = new System.Uri(Configuration["Tempo:Url"]);
+
+            services.AddOpenTelemetryTracing(
+                (builder) => {
+                    builder
+                    .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("example-app"))
+                    .AddAspNetCoreInstrumentation()
+                    .AddConsoleExporter()
+                    .AddOtlpExporter(opt => {
+                        opt.Endpoint = ep;
+                    });
+                });
+
             services.AddControllers();
         }
 
