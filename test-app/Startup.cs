@@ -31,24 +31,28 @@ namespace test_app
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var ep = new System.Uri(Configuration["Tempo:Url"]);
+            services.AddControllers();
+            services.AddHttpClient();
 
-            services.AddOpenTelemetryMetrics(builder => {
-                builder.AddPrometheusExporter();
-            });
+            var ep = new System.Uri(Configuration["Tempo:Url"]);
 
             services.AddOpenTelemetryTracing(
                 (builder) => {
                     builder
                     .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("example-app"))
                     .AddAspNetCoreInstrumentation()
+                    .AddHttpClientInstrumentation()
                     .AddConsoleExporter()
                     .AddOtlpExporter(opt => {
                         opt.Endpoint = ep;
                     });
                 });
 
-            services.AddControllers();
+            services.AddOpenTelemetryMetrics(builder => {
+                builder.AddAspNetCoreInstrumentation();
+                builder.AddHttpClientInstrumentation();
+                builder.AddPrometheusExporter();
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,9 +67,7 @@ namespace test_app
 
             app.UseRouting();
 
-            app.UseOpenTelemetryPrometheusScrapingEndpoint(
-                context => context.Request.Path == "/internal/metrics"
-                    && context.Connection.LocalPort == 5067);
+            app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
             app.UseAuthorization();
 
